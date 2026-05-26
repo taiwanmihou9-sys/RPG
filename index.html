@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗影傳說 - Shadow Legend</title>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --panel: #141420;
+            --border: #2a2a3a;
+            --gold: #c9a050;
+            --gold-bright: #e0c070;
+            --text: #c8c8d0;
+            --text-bright: #e8e8f0;
+            --red: #c0392b;
+            --red-bright: #e74c3c;
+            --blue: #2980b9;
+            --blue-bright: #3498db;
+            --green: #27ae60;
+            --green-bright: #2ecc71;
+            --purple: #8e44ad;
+            --purple-bright: #a569bd;
+            --orange: #d35400;
+            --orange-bright: #e67e22;
+            --rarity-common: #9d9d9d;
+            --rarity-rare: #4da6ff;
+            --rarity-epic: #c060e0;
+            --rarity-legendary: #ff8c00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #050508;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', 'PingFang TC', sans-serif;
+            background-image:
+                radial-gradient(ellipse at center, #0d0d1a 0%, #050508 70%),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 255, 255, 0.003) 2px, rgba(255, 255, 255, 0.003) 4px);
+            background-attachment: fixed;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 750px;
+            min-height: 92vh;
+            margin: 20px;
+            background: var(--panel);
+            border: 3px solid var(--border);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 0 60px rgba(100, 80, 30, 0.15),
+                0 0 120px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.02);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #game-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 18px;
+            border: 1px solid rgba(200, 160, 70, 0.2);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 頂部裝飾條 */
+        #top-ornament {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            z-index: 11;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        /* 標題區 */
+        #header {
+            padding: 18px 24px 10px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            position: relative;
+            z-index: 1;
+        }
+        #header h1 {
+            font-size: 1.8em;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-shadow: 0 0 30px rgba(200, 160, 60, 0.5), 0 2px 4px rgba(0, 0, 0, 0.6);
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+        #header .subtitle {
+            font-size: 0.75em;
+            color: #7a7a8a;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+        }
+
+        /* 主要內容區 */
+        #main-content {
+            flex: 1;
+            padding: 16px 20px;
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+        #main-content::-webkit-scrollbar {
+            width: 6px;
+        }
+        #main-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #main-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 3px;
+        }
+
+        /* 底部狀態欄 */
+        #status-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(0, 0, 0, 0.3);
+            font-size: 0.85em;
+            gap: 8px;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #aaa;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .status-item .icon {
+            font-size: 1.2em;
+        }
+        .status-val {
+            color: #e0d0b0;
+            font-weight: 600;
+        }
+        .status-val.hp {
+            color: #e74c3c;
+        }
+        .status-val.mp {
+            color: #3498db;
+        }
+        .status-val.lvl {
+            color: #f0c040;
+        }
+        .status-val.gold {
+            color: #e0b030;
+        }
+
+        /* 面板 */
+        .panel {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 16px;
+            transition: all 0.3s;
+        }
+        .panel h3 {
+            color: var(--gold);
+            margin: 0 0 10px;
+            font-size: 1.1em;
+            letter-spacing: 1px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding-bottom: 8px;
+        }
+
+        /* 按鈕 */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+            transition: all 0.25s;
+            text-align: center;
+            color: #d0d0d0;
+            background: rgba(30, 30, 45, 0.8);
+            font-family: inherit;
+            outline: none;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover {
+            background: rgba(50, 50, 70, 0.9);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        .btn:active {
+            transform: scale(0.96);
+            transition: transform 0.1s;
+            background: rgba(20, 20, 35, 0.9);
+        }
+        .btn.primary {
+            background: rgba(180, 130, 40, 0.25);
+            border-color: rgba(200, 160, 60, 0.5);
+            color: #e8c860;
+        }
+        .btn.primary:hover {
+            background: rgba(200, 140, 40, 0.4);
+            border-color: rgba(220, 180, 80, 0.7);
+            color: #ffe090;
+            box-shadow: 0 4px 20px rgba(180, 130, 30, 0.3);
+        }
+        .btn.danger {
+            background: rgba(180, 40, 40, 0.25);
+            border-color: rgba(200, 60, 60, 0.5);
+            color: #e86060;
+        }
+        .btn.danger:hover {
+            background: rgba(200, 50, 50, 0.4);
+            border-color: rgba(220, 80, 80, 0.7);
+            color: #ff8080;
+        }
+        .btn.small {
+            padding: 6px 14px;
+            font-size: 0.8em;
+            letter-spacing: 0.5px;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+        .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        /* 職業選擇卡片 */
+        .class-cards {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .class-card {
+            flex: 1;
+            min-width: 140px;
+            max-width: 200px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .class-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            background: rgba(20, 15, 30, 0.6);
+        }
+        .class-card .class-icon {
+            font-size: 3em;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .class-card .class-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            color: #e0d0b0;
+            letter-spacing: 1px;
+        }
+        .class-card .class-desc {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+        .class-card .class-stats {
+            font-size: 0.7em;
+            color: #777;
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+
+        /* 戰鬥日誌 */
+        #battle-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 0.82em;
+            line-height: 1.6;
+            color: #b0b0b0;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            font-family: 'Consolas', 'Courier New', 'Microsoft JhengHei', monospace;
+        }
+        #battle-log .log-entry {
+            padding: 2px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            animation: fadeInLog 0.3s ease;
+        }
+        @keyframes fadeInLog {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        .log-damage {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        .log-heal {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+        .log-crit {
+            color: #ff6b35;
+            font-weight: 700;
+            text-shadow: 0 0 8px rgba(255, 100, 30, 0.5);
+        }
+        .log-info {
+            color: #8ab4d8;
+        }
+        .log-loot {
+            color: #f0c040;
+            font-weight: 600;
+        }
+        .log-skill {
+            color: #c080e0;
+            font-weight: 600;
+        }
+
+        /* 生命條 */
+        .hp-bar-outer {
+            background: #1a0a0a;
+            border-radius: 6px;
+            height: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .hp-bar-inner {
+            height: 100%;
+            background: linear-gradient(180deg, #e74c3c 0%, #a02020 100%);
+            border-radius: 5px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+        .hp-bar-inner::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            right: 4px;
+            height: 30%;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        .hp-bar-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.7em;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+            white-space: nowrap;
+            z-index: 2;
+        }
+
+        /* 怪物/敵人區 */
+        .enemy-display {
+            text-align: center;
+            padding: 10px;
+            background: rgba(80, 20, 20, 0.2);
+            border-radius: 10px;
+            border: 1px solid rgba(200, 60, 60, 0.25);
+        }
+        .enemy-display .enemy-icon {
+            font-size: 4em;
+            display: block;
+            animation: enemyFloat 2s ease-in-out infinite;
+        }
+        @keyframes enemyFloat {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        .enemy-display .enemy-name {
+            font-weight: 700;
+            color: #e86060;
+            letter-spacing: 1px;
+            font-size: 1.1em;
+        }
+        .enemy-display .enemy-type {
+            font-size: 0.7em;
+            color: #999;
+        }
+
+        /* 震動動畫 */
+        .shake {
+            animation: shake 0.5s ease;
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            20% {
+                transform: translateX(-8px);
+            }
+            40% {
+                transform: translateX(8px);
+            }
+            60% {
+                transform: translateX(-5px);
+            }
+            80% {
+                transform: translateX(5px);
+            }
+        }
+
+        /* 閃光效果 */
+        .flash-gold {
+            animation: flashGold 0.6s ease;
+        }
+        @keyframes flashGold {
+            0% {
+                box-shadow: 0 0 0 rgba(255, 200, 50, 0);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(255, 200, 50, 0.8);
+            }
+            100% {
+                box-shadow: 0 0 0 rgba(255, 200, 50, 0);
+            }
+        }
+
+        /* 裝備品質顏色 */
+        .rarity-common {
+            color: #9d9d9d;
+        }
+        .rarity-rare {
+            color: #4da6ff;
+            text-shadow: 0 0 6px rgba(77, 166, 255, 0.3);
+        }
+        .rarity-epic {
+            color: #c060e0;
+            text-shadow: 0 0 8px rgba(192, 96, 224, 0.4);
+        }
+        .rarity-legendary {
+            color: #ff8c00;
+            text-shadow: 0 0 12px rgba(255, 140, 0, 0.5);
+            font-weight: 700;
+        }
+
+        /* 響應式 */
+        @media (max-width: 600px) {
+            #game-container {
+                margin: 8px;
+                border-radius: 10px;
+                min-height: 95vh;
+            }
+            #header h1 {
+                font-size: 1.3em;
+                letter-spacing: 1px;
+            }
+            #header .subtitle {
+                font-size: 0.65em;
+                letter-spacing: 3px;
+            }
+            #main-content {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            .class-cards {
+                gap: 6px;
+            }
+            .class-card {
+                min-width: 90px;
+                padding: 10px 8px;
+            }
+            .class-card .class-icon {
+                font-size: 2em;
+            }
+            .btn {
+                padding: 8px 14px;
+                font-size: 0.8em;
+            }
+            #status-bar {
+                font-size: 0.7em;
+                gap: 4px;
+                padding: 8px 10px;
+            }
+            .enemy-display .enemy-icon {
+                font-size: 2.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="top-ornament"></div>
+        <div id="header">
+            <h1>⚔️ 暗影傳說</h1>
+            <div class="subtitle">Shadow Legend · 回合制RPG</div>
+        </div>
+        <div id="main-content"></div>
+        <div id="status-bar" style="display:none;"></div>
+    </div>
+
+    <script>
+        (function() {
+            // ==================== 遊戲引擎 ====================
+            const GAME_STATES = {
+                TITLE: 'title',
+                CLASS_SELECT: 'class_select',
+                VILLAGE: 'village',
+                EXPLORE: 'explore',
+                BATTLE: 'battle',
+                INVENTORY: 'inventory',
+                SHOP: 'shop',
+                STATUS: 'status',
+                GAME_OVER: 'game_over',
+                VICTORY: 'victory',
+                REST: 'rest',
+            };
+
+            // 職業定義
+            const CLASSES = {
+                warrior: {
+                    name: '戰士',
+                    icon: '🛡️',
+                    desc: '近戰專家，擁有強大的防禦力與穩定的輸出',
+                    baseHP: 180,
+                    baseMP: 40,
+                    baseATK: 22,
+                    baseDEF: 18,
+                    baseSPD: 10,
+                    critRate: 0.08,
+                    skills: [
+                        { name: '猛擊', desc: '奮力一擊造成150%傷害', mpCost: 10, multiplier: 1.5, type: 'damage',
+                            color: '#e86040' },
+                        { name: '盾牆', desc: '提升50%防禦力，持續2回合', mpCost: 15, multiplier: 0, type: 'buff_def',
+                            buffValue: 0.5, duration: 2, color: '#6090d0' },
+                    ],
+                },
+                mage: {
+                    name: '法師',
+                    icon: '🔮',
+                    desc: '元素掌控者，高魔法傷害但身板脆弱',
+                    baseHP: 100,
+                    baseMP: 100,
+                    baseATK: 28,
+                    baseDEF: 8,
+                    baseSPD: 13,
+                    critRate: 0.05,
+                    skills: [
+                        { name: '火球術', desc: '釋放火球造成200%傷害', mpCost: 20, multiplier: 2.0, type: 'damage',
+                            color: '#ff6030' },
+                        { name: '冰霜護盾', desc: '減少30%受到的傷害，持續2回合', mpCost: 18, multiplier: 0, type: 'buff_shield',
+                            buffValue: 0.3, duration: 2, color: '#60c0f0' },
+                    ],
+                },
+                rogue: {
+                    name: '刺客',
+                    icon: '🗡️',
+                    desc: '暗影中的致命舞者，高速高暴擊',
+                    baseHP: 130,
+                    baseMP: 55,
+                    baseATK: 25,
+                    baseDEF: 12,
+                    baseSPD: 20,
+                    critRate: 0.22,
+                    skills: [
+                        { name: '暗影突襲', desc: '致命一擊造成250%傷害', mpCost: 25, multiplier: 2.5, type: 'damage',
+                            color: '#d040e0' },
+                        { name: '毒刃', desc: '施加劇毒，3回合內每回合造成ATK×0.4傷害', mpCost: 15, multiplier: 0.4, type: 'poison',
+                            duration: 3, color: '#40c040' },
+                    ],
+                },
+            };
+
+            // 區域與怪物定義
+            const ZONES = [
+                {
+                    id: 'forest',
+                    name: '幽暗森林',
+                    icon: '🌲',
+                    desc: '村莊外的陰暗森林，低階魔物出沒之地',
+                    unlockLevel: 1,
+                    monsters: [
+                        { name: '哥布林', icon: '👹', hp: 35, atk: 8, def: 3, spd: 8, exp: 25, gold: 15,
+                            lootTable: [{ itemId: 'iron_sword', chance: 0.06 }, { itemId: 'cloth_armor',
+                                chance: 0.08 }] },
+                        { name: '巨狼', icon: '🐺', hp: 55, atk: 14, def: 5, spd: 14, exp: 45, gold: 28,
+                            lootTable: [{ itemId: 'iron_sword', chance: 0.1 }, { itemId: 'hunter_bow',
+                            chance: 0.07 }] },
+                        { name: '樹精', icon: '🌳', hp: 75, atk: 11, def: 10, spd: 5, exp: 60, gold: 35,
+                            lootTable: [{ itemId: 'oak_shield', chance: 0.1 }, { itemId: 'cloth_armor',
+                            chance: 0.12 }] },
+                    ],
+                    boss: { name: '森林巨魔', icon: '👾', hp: 180, atk: 20, def: 12, spd: 7, exp: 200, gold: 150,
+                        lootTable: [{ itemId: 'steel_blade', chance: 0.5 }, { itemId: 'chainmail', chance: 0.45 },
+                        { itemId: 'silver_ring', chance: 0.3 }], isBoss: true },
+                },
+                {
+                    id: 'mine',
+                    name: '廢棄礦洞',
+                    icon: '⛏️',
+                    desc: '深入地底的黑暗礦坑，岩石傀儡橫行',
+                    unlockLevel: 5,
+                    monsters: [
+                        { name: '礦洞蝙蝠', icon: '🦇', hp: 90, atk: 18, def: 6, spd: 16, exp: 80, gold: 50,
+                            lootTable: [{ itemId: 'steel_blade', chance: 0.08 }, { itemId: 'chainmail',
+                            chance: 0.1 }] },
+                        { name: '岩石傀儡', icon: '🪨', hp: 140, atk: 22, def: 18, spd: 4, exp: 130, gold: 70,
+                            lootTable: [{ itemId: 'mithril_blade', chance: 0.06 }, { itemId: 'dragon_scale',
+                                chance: 0.04 }] },
+                    ],
+                    boss: { name: '礦洞之王', icon: '👿', hp: 320, atk: 30, def: 22, spd: 9, exp: 500, gold: 350,
+                        lootTable: [{ itemId: 'mithril_blade', chance: 0.55 }, { itemId: 'dragon_scale', chance: 0.5 },
+                        { itemId: 'magic_ring', chance: 0.35 }], isBoss: true },
+                },
+                {
+                    id: 'castle',
+                    name: '亡靈城堡',
+                    icon: '🏰',
+                    desc: '被詛咒的古堡，不死生物在此徘徊',
+                    unlockLevel: 10,
+                    monsters: [
+                        { name: '骷髏戰士', icon: '💀', hp: 170, atk: 28, def: 15, spd: 11, exp: 180, gold: 100,
+                            lootTable: [{ itemId: 'shadow_blade', chance: 0.04 }, { itemId: 'ancient_armor',
+                                chance: 0.03 }] },
+                        { name: '幽靈', icon: '👻', hp: 130, atk: 35, def: 5, spd: 22, exp: 200, gold: 110,
+                            lootTable: [{ itemId: 'magic_ring', chance: 0.08 }, { itemId: 'shadow_blade',
+                            chance: 0.05 }] },
+                    ],
+                    boss: { name: '亡靈領主', icon: '🧛', hp: 480, atk: 40, def: 25, spd: 14, exp: 1000, gold: 700,
+                        lootTable: [{ itemId: 'shadow_blade', chance: 0.6 }, { itemId: 'ancient_armor', chance: 0.55 },
+                        { itemId: 'destiny_ring', chance: 0.3 }], isBoss: true },
+                },
+                {
+                    id: 'dragon_lair',
+                    name: '龍之巢穴',
+                    icon: '🌋',
+                    desc: '最終試煉之地，遠古巨龍的棲息處',
+                    unlockLevel: 15,
+                    monsters: [
+                        { name: '火龍幼崽', icon: '🐉', hp: 280, atk: 38, def: 20, spd: 18, exp: 350, gold: 200,
+                            lootTable: [{ itemId: 'ancient_armor', chance: 0.08 }, { itemId: 'destiny_ring',
+                            chance: 0.05 }] },
+                    ],
+                    boss: { name: '遠古巨龍', icon: '🐲', hp: 700, atk: 55, def: 30, spd: 16, exp: 3000, gold: 2000,
+                        lootTable: [{ itemId: 'destiny_ring', chance: 0.7 }, { itemId: 'shadow_blade', chance: 0.5 },
+                        { itemId: 'ancient_armor', chance: 0.5 }], isBoss: true, isFinalBoss: true },
+                },
+            ];
+
+            // 裝備定義
+            const ALL_ITEMS = {
+                iron_sword: { id: 'iron_sword', name: '鐵劍', slot: 'weapon', rarity: 'common', atk: 6, def: 0, hp: 0,
+                    spd: 0, value: 40, icon: '⚔️', desc: '普通的鐵製長劍' },
+                cloth_armor: { id: 'cloth_armor', name: '布甲', slot: 'armor', rarity: 'common', atk: 0, def: 5, hp: 10,
+                    spd: 0, value: 35, icon: '👘', desc: '輕便的布質護甲' },
+                hunter_bow: { id: 'hunter_bow', name: '獵人之弓', slot: 'weapon', rarity: 'rare', atk: 10, def: 0, hp: 0,
+                    spd: 3, value: 80, icon: '🏹', desc: '精準的狩獵用弓' },
+                oak_shield: { id: 'oak_shield', name: '橡木盾', slot: 'armor', rarity: 'rare', atk: 0, def: 9, hp: 20,
+                    spd: -1, value: 70, icon: '🛡️', desc: '堅固的橡木盾牌' },
+                steel_blade: { id: 'steel_blade', name: '精鋼長劍', slot: 'weapon', rarity: 'rare', atk: 14, def: 0, hp: 0,
+                    spd: 1, value: 150, icon: '🗡️', desc: '精鋼打造的鋒利長劍' },
+                chainmail: { id: 'chainmail', name: '鎖子甲', slot: 'armor', rarity: 'rare', atk: 0, def: 14, hp: 30,
+                    spd: 0, value: 140, icon: '🦺', desc: '環環相扣的鐵甲' },
+                silver_ring: { id: 'silver_ring', name: '銀戒指', slot: 'ring', rarity: 'rare', atk: 4, def: 2, hp: 15,
+                    spd: 2, value: 120, icon: '💍', desc: '閃耀著微光的銀戒' },
+                mithril_blade: { id: 'mithril_blade', name: '秘銀之刃', slot: 'weapon', rarity: 'epic', atk: 22, def: 0,
+                    hp: 0, spd: 4, value: 400, icon: '🔪', desc: '輕盈而鋒利的秘銀武器' },
+                dragon_scale: { id: 'dragon_scale', name: '龍鱗甲', slot: 'armor', rarity: 'epic', atk: 0, def: 22, hp: 60,
+                    spd: 1, value: 380, icon: '🦎', desc: '由龍鱗製成的堅固盔甲' },
+                magic_ring: { id: 'magic_ring', name: '魔法戒指', slot: 'ring', rarity: 'epic', atk: 8, def: 5, hp: 30,
+                    spd: 4, value: 350, icon: '💎', desc: '蘊含魔力的華麗戒指' },
+                shadow_blade: { id: 'shadow_blade', name: '暗影之劍', slot: 'weapon', rarity: 'legendary', atk: 32, def: 0,
+                    hp: 20, spd: 7, value: 1200, icon: '⚡', desc: '傳奇暗影武器，削鐵如泥' },
+                ancient_armor: { id: 'ancient_armor', name: '遠古神甲', slot: 'armor', rarity: 'legendary', atk: 0, def: 32,
+                    hp: 100, spd: 2, value: 1100, icon: '🛡️', desc: '遠古諸神遺留的神聖盔甲' },
+                destiny_ring: { id: 'destiny_ring', name: '命運之戒', slot: 'ring', rarity: 'legendary', atk: 14, def: 10,
+                    hp: 50, spd: 8, value: 1500, icon: '🌟', desc: '傳說中能改變命運的戒指' },
+            };
+
+            const RARITY_COLORS = {
+                common: { color: '#9d9d9d', name: '普通', cssClass: 'rarity-common' },
+                rare: { color: '#4da6ff', name: '稀有', cssClass: 'rarity-rare' },
+                epic: { color: '#c060e0', name: '史詩', cssClass: 'rarity-epic' },
+                legendary: { color: '#ff8c00', name: '傳說', cssClass: 'rarity-legendary' },
+            };
+
+            // ==================== 遊戲狀態 ====================
+            let gameState = {
+                currentScene: GAME_STATES.TITLE,
+                player: null,
+                currentZone: null,
+                currentEnemy: null,
+                battleLog: [],
+                buffs: { defBoost: 0, shieldAmount: 0, poisonTurns: 0, poisonDamage: 0 },
+                buffTurns: { defBoost: 0, shieldAmount: 0, poisonTurns: 0 },
+                defeatedBosses: [],
+                totalKills: 0,
+            };
+
+            // ==================== DOM引用 ====================
+            const mainContent = document.getElementById('main-content');
+            const statusBar = document.getElementById('status-bar');
+            const gameContainer = document.getElementById('game-container');
+
+            // ==================== 工具函數 ====================
+            function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+            function randFloat(min, max) { return Math.random() * (max - min) + min; }
+
+            function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+            function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
+            function formatNum(n) { return n.toLocaleString(); }
+
+            // ==================== 渲染函數 ====================
+            function clearContent() { mainContent.innerHTML = ''; }
+
+            function renderStatusBar() {
+                if (!gameState.player) { statusBar.style.display = 'none';
+                    return; }
+                statusBar.style.display = 'flex';
+                const p = gameState.player;
+                statusBar.innerHTML = `
+                    <span class="status-item"><span class="icon">🛡️</span> <span class="status-val lvl">Lv.${p.level}</span></span>
+                    <span class="status-item"><span class="icon">❤️</span> <span class="status-val hp">${p.hp}/${p.maxHP}</span></span>
+                    <span class="status-item"><span class="icon">💧</span> <span class="status-val mp">${p.mp}/${p.maxMP}</span></span>
+                    <span class="status-item"><span class="icon">⚔️</span> ATK:<span class="status-val">${p.atk}</span></span>
+                    <span class="status-item"><span class="icon">🛡️</span> DEF:<span class="status-val">${p.def}</span></span>
+                    <span class="status-item"><span class="icon">💰</span> <span class="status-val gold">${formatNum(p.gold)}</span></span>
+                `;
+            }
+
+            function addLog(msg, cssClass = '') {
+                gameState.battleLog.push({ msg, cssClass });
+                if (gameState.battleLog.length > 50) gameState.battleLog.shift();
+                const logContainer = document.getElementById('battle-log');
+                if (logContainer) {
+                    const entry = document.createElement('div');
+                    entry.className = 'log-entry ' + cssClass;
+                    entry.textContent = msg;
+                    logContainer.appendChild(entry);
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                }
+            }
+
+            function clearBattleLog() {
+                gameState.battleLog = [];
+                const logContainer = document.getElementById('battle-log');
+                if (logContainer) logContainer.innerHTML = '';
+            }
+
+            // ==================== 場景渲染 ====================
+            function renderTitle() {
+                gameState.currentScene = GAME_STATES.TITLE;
+                gameState.player = null;
+                gameState.buffs = { defBoost: 0, shieldAmount: 0, poisonTurns: 0, poisonDamage: 0 };
+                gameState.buffTurns = { defBoost: 0, shieldAmount: 0, poisonTurns: 0 };
+                gameState.defeatedBosses = [];
+                gameState.totalKills = 0;
+                statusBar.style.display = 'none';
+                clearContent();
+                mainContent.innerHTML = `
+                    <div class="panel" style="text-align:center;padding:30px 20px;">
+                        <div style="font-size:5em;margin-bottom:10px;animation:enemyFloat 3s ease-in-out infinite;">⚔️</div>
+                        <h3 style="font-size:1.5em;color:#e0c870;letter-spacing:3px;">暗影傳說</h3>
+                        <p style="color:#888;margin:8px 0;line-height:1.5;">踏上史詩般的冒險旅程<br>消滅黑暗勢力，成為傳奇英雄</p>
+                        <div style="margin-top:20px;">
+                            <button class="btn primary" onclick="startClassSelect()" style="font-size:1.1em;padding:12px 40px;">
+                                🎮 開始冒險
+                            </button>
+                        </div>
+                        <p style="color:#555;font-size:0.7em;margin-top:16px;">回合制RPG · 4大區域 · 傳奇裝備等你來戰</p>
+                    </div>
+                `;
+            }
+
+            function startClassSelect() {
+                gameState.currentScene = GAME_STATES.CLASS_SELECT;
+                statusBar.style.display = 'none';
+                clearContent();
+                let cardsHTML = '';
+                for (const [key, cls] of Object.entries(CLASSES)) {
+                    cardsHTML += `
+                        <div class="class-card" onclick="selectClass('${key}')">
+                            <span class="class-icon">${cls.icon}</span>
+                            <div class="class-name">${cls.name}</div>
+                            <div class="class-desc">${cls.desc}</div>
+                            <div class="class-stats">
+                                ❤️HP:${cls.baseHP} 💧MP:${cls.baseMP}<br>
+                                ⚔️ATK:${cls.baseATK} 🛡️DEF:${cls.baseDEF}<br>
+                                💨SPD:${cls.baseSPD} 💥暴擊:${Math.round(cls.critRate*100)}%
+                            </div>
+                        </div>
+                    `;
+                }
+                mainContent.innerHTML = `
+                    <div class="panel" style="text-align:center;">
+                        <h3>🏆 選擇你的職業</h3>
+                        <div class="class-cards">${cardsHTML}</div>
+                        <button class="btn small" onclick="renderTitle()" style="margin-top:12px;">⬅ 返回</button>
+                    </div>
+                `;
+            }
+
+            function selectClass(classKey) {
+                const cls = CLASSES[classKey];
+                gameState.player = {
+                    classKey: classKey,
+                    className: cls.name,
+                    classIcon: cls.icon,
+                    level: 1,
+                    exp: 0,
+                    expToNext: 80,
+                    hp: cls.baseHP,
+                    maxHP: cls.baseHP,
+                    mp: cls.baseMP,
+                    maxMP: cls.baseMP,
+                    atk: cls.baseATK,
+                    def: cls.baseDEF,
+                    spd: cls.baseSPD,
+                    critRate: cls.critRate,
+                    gold: 50,
+                    skills: JSON.parse(JSON.stringify(cls.skills)),
+                    equipment: { weapon: null, armor: null, ring: null },
+                    inventory: [],
+                    potions: { hp: 3, mp: 2 },
+                };
+                gameState.defeatedBosses = [];
+                gameState.totalKills = 0;
+                gameState.buffs = { defBoost: 0, shieldAmount: 0, poisonTurns: 0, poisonDamage: 0 };
+                gameState.buffTurns = { defBoost: 0, shieldAmount: 0, poisonTurns: 0 };
+                renderStatusBar();
+                renderVillage();
+            }
+
+            function getPlayerEffectiveStats() {
+                const p = gameState.player;
+                let atk = p.atk;
+                let def = p.def;
+                let maxHP = p.maxHP;
+                let spd = p.spd;
+                for (const slot of ['weapon', 'armor', 'ring']) {
+                    const eq = p.equipment[slot];
+                    if (eq) {
+                        atk += eq.atk || 0;
+                        def += eq.def || 0;
+                        maxHP += eq.hp || 0;
+                        spd += eq.spd || 0;
+                    }
+                }
+                def = Math.floor(def * (1 + gameState.buffs.defBoost));
+                return { atk, def, maxHP, spd, critRate: p.critRate };
+            }
+
+            function getPlayerCurrentDef() {
+                const stats = getPlayerEffectiveStats();
+                return stats.def;
+            }
+
+            function renderVillage() {
+                gameState.currentScene = GAME_STATES.VILLAGE;
+                gameState.buffs = { defBoost: 0, shieldAmount: 0, poisonTurns: 0, poisonDamage: 0 };
+                gameState.buffTurns = { defBoost: 0, shieldAmount: 0, poisonTurns: 0 };
+                const p = gameState.player;
+                p.hp = p.maxHP;
+                p.mp = p.maxMP;
+                clearContent();
+                renderStatusBar();
+                const stats = getPlayerEffectiveStats();
+                let zonesUnlocked = '';
+                ZONES.forEach(z => {
+                    const unlocked = p.level >= z.unlockLevel;
+                    const defeated = gameState.defeatedBosses.includes(z.id);
+                    zonesUnlocked += `
+                        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.03);">
+                            <span style="font-size:1.5em;">${z.icon}</span>
+                            <span style="flex:1;color:${unlocked?'#ccc':'#555'};">${z.name}</span>
+                            <span style="font-size:0.7em;color:${defeated?'#2ecc71':(unlocked?'#e0b030':'#666')};">
+                                ${defeated ? '✅已通關' : (unlocked ? '🔓可探索' : '🔒Lv.'+z.unlockLevel)}
+                            </span>
+                        </div>
+                    `;
+                });
+                mainContent.innerHTML = `
+                    <div class="panel">
+                        <h3>🏘️ 寧靜村莊</h3>
+                        <p style="text-align:center;color:#888;">你回到了安全的村莊，在這裡休息整備</p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+                            <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:2em;">${p.classIcon}</div>
+                                <div style="font-weight:700;">${p.className} Lv.${p.level}</div>
+                                <div style="font-size:0.75em;color:#888;">❤️${stats.maxHP} ⚔️${stats.atk} 🛡️${stats.def} 💨${stats.spd}</div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;text-align:center;">
+                                <div style="font-size:2em;">📊</div>
+                                <div style="font-weight:700;">經驗值</div>
+                                <div style="font-size:0.75em;color:#888;">${formatNum(p.exp)} / ${formatNum(p.expToNext)}</div>
+                                <div style="font-size:0.7em;color:#999;">擊殺: ${gameState.totalKills}</div>
+                            </div>
+                        </div>
+                        <div class="btn-row" style="margin-top:14px;">
+                            <button class="btn primary" onclick="renderExplore()">🗺️ 出發探索</button>
+                            <button class="btn" onclick="renderInventory()">🎒 背包</button>
+                            <button class="btn" onclick="renderShop()">🏪 商店</button>
+                            <button class="btn" onclick="renderStatus()">📋 狀態</button>
+                        </div>
+                    </div>
+                    <div class="panel">
+                        <h3>🗺️ 冒險區域</h3>
+                        ${zonesUnlocked}
+                    </div>
+                `;
+            }
+
+            function renderExplore() {
+                gameState.currentScene = GAME_STATES.EXPLORE;
+                clearContent();
+                renderStatusBar();
+                let zonesHTML = '';
+                ZONES.forEach(z => {
+                    const unlocked = p.level >= z.unlockLevel;
+                    const defeated = gameState.defeatedBosses.includes(z.id);
+                    const isBossAlive = unlocked && !defeated;
+                    zonesHTML += `
+                        <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;margin-bottom:8px;
+                            ${!unlocked?'opacity:0.4;pointer-events:none;':''}">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="font-size:2.5em;">${z.icon}</span>
+                                <div style="flex:1;">
+                                    <div style="font-weight:700;color:#e0d0b0;">${z.name}</div>
+                                    <div style="font-size:0.75em;color:#888;">${z.desc}</div>
+                                    <div style="font-size:0.7em;color:#777;">建議等級: ${z.unlockLevel}+ | ${defeated?'✅已通關':'⚠️未征服'}</div>
+                                </div>
+                            </div>
+                            <div class="btn-row" style="margin-top:8px;">
+                                <button class="btn small" onclick="startBattle('${z.id}','normal')" ${!unlocked?'disabled':''}>
+                                    🎯 狩獵怪物
+                                </button>
+                                ${isBossAlive ? `
+                                <button class="btn small danger" onclick="startBattle('${z.id}','boss')">
+                                    💀 挑戰Boss
+                                </button>` : (defeated ? `<span style="color:#2ecc71;font-size:0.8em;">Boss已擊敗</span>` :
+                                    `<span style="color:#666;font-size:0.8em;">🔒需先通關</span>`)}
+                            </div>
+                        </div>
+                    `;
+                });
+                const p = gameState.player;
+                mainContent.innerHTML = `
+                    <div class="panel">
+                        <h3>🗺️ 選擇冒險區域</h3>
+                        ${zonesHTML}
+                        <button class="btn small" onclick="renderVillage()" style="margin-top:8px;">⬅ 返回村莊</button>
+                    </div>
+                `;
+            }
+
+            function startBattle(zoneId, type) {
+                const zone = ZONES.find(z => z.id === zoneId);
+                if (!zone) return;
+                gameState.currentZone = zone;
+                let enemyData;
+                if (type === 'boss') {
+                    enemyData = JSON.parse(JSON.stringify(zone.boss));
+                } else {
+                    enemyData = JSON.parse(JSON.stringify(pickRandom(zone.monsters)));
+                }
+                gameState.currentEnemy = enemyData;
+                gameState.buffs = { defBoost: 0, shieldAmount: 0, poisonTurns: 0, poisonDamage: 0 };
+                gameState.buffTurns = { defBoost: 0, shieldAmount: 0, poisonTurns: 0 };
+                gameState.currentScene = GAME_STATES.BATTLE;
+                clearBattleLog();
+                addLog(`⚔️ ${enemyData.name} 出現了！準備戰鬥！`, 'log-info');
+                if (enemyData.isBoss) {
+                    addLog(`⚠️ 這是一場Boss戰！${enemyData.name} 異常強大！`, 'log-crit');
+                }
+                if (enemyData.isFinalBoss) {
+                    addLog(`🔥 最終之戰！擊敗${enemyData.name}即可拯救世界！`, 'log-crit');
+                }
+                renderBattle();
+            }
+
+            function renderBattle() {
+                clearContent();
+                renderStatusBar();
+                const enemy = gameState.currentEnemy;
+                const p = gameState.player;
+                const stats = getPlayerEffectiveStats();
+                const enemyHpPct = Math.max(0, Math.round((enemy.hp / enemy.maxHP) * 100));
+                const playerHpPct = Math.max(0, Math.round((p.hp / stats.maxHP) * 100));
+                mainContent.innerHTML = `
+                    <div class="enemy-display" id="enemy-display">
+                        <span class="enemy-icon">${enemy.icon}</span>
+                        <div class="enemy-name">${enemy.name} ${enemy.isBoss?'👑':''}${enemy.isFinalBoss?'🔥':''}</div>
+                        <div class="enemy-type">${enemy.isFinalBoss?'最終Boss':(enemy.isBoss?'區域Boss':'普通怪物')}</div>
+                        <div style="max-width:300px;margin:8px auto;">
+                            <div class="hp-bar-outer">
+                                <div class="hp-bar-inner" style="width:${enemyHpPct}%;${enemyHpPct<25?'background:linear-gradient(180deg,#c0392b 0%,#701010 100%);':''}"></div>
+                                <span class="hp-bar-text">❤️ ${enemy.hp}/${enemy.maxHP}</span>
+                            </div>
+                        </div>
+                        <div style="font-size:0.75em;color:#999;">⚔️ATK:${enemy.atk} 🛡️DEF:${enemy.def} 💨SPD:${enemy.spd}</div>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.3);padding:10px;border-radius:8px;text-align:center;">
+                        <span style="color:#ccc;">🧑 ${p.className} Lv.${p.level}</span>
+                        <div style="max-width:300px;margin:4px auto;">
+                            <div class="hp-bar-outer">
+                                <div class="hp-bar-inner" style="width:${playerHpPct}%;${playerHpPct<25?'background:linear-gradient(180deg,#c0392b 0%,#701010 100%);':''}"></div>
+                                <span class="hp-bar-text">❤️ ${p.hp}/${stats.maxHP} | 💧MP:${p.mp}/${p.maxMP}</span>
+                            </div>
+                        </div>
+                        ${gameState.buffs.defBoost>0?`<span style="color:#6090d0;font-size:0.75em;">🛡️防禦加成 +${Math.round(gameState.buffs.defBoost*100)}% (${gameState.buffTurns.defBoost}回合)</span> `:''}
+                        ${gameState.buffs.shieldAmount>0?`<span style="color:#60c0f0;font-size:0.75em;">❄️冰霜護盾 -${Math.round(gameState.buffs.shieldAmount*100)}% (${gameState.buffTurns.shieldAmount}回合)</span> `:''}
+                        ${gameState.buffs.poisonTurns>0?`<span style="color:#40c040;font-size:0.75em;">☠️中毒 ${gameState.buffTurns.poisonTurns}回合</span>`:''}
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn" onclick="playerAttack()" id="btn-attack">⚔️ 攻擊</button>
+                        ${p.skills.map((sk, i) => `
+                            <button class="btn" onclick="playerSkill(${i})" id="btn-skill-${i}"
+                                ${p.mp < sk.mpCost ? 'disabled' : ''}
+                                style="border-color:rgba(180,130,200,0.4);">
+                                ✨ ${sk.name} (${sk.mpCost}MP)
+                            </button>
+                        `).join('')}
+                        <button class="btn small" onclick="playerUsePotion()" id="btn-potion"
+                            ${p.potions.hp<=0&&p.potions.mp<=0?'disabled':''}>
+                            🧪 藥水 (❤️${p.potions.hp} 💧${p.potions.mp})
+                        </button>
+                        <button class="btn small danger" onclick="playerFlee()" id="btn-flee"
+                            ${enemy.isBoss?'disabled':''}>
+                            🏃 逃跑
+                        </button>
+                    </div>
+                    <div id="battle-log" class="panel" style="max-height:180px;">
+                        ${gameState.battleLog.map(l => `<div class="log-entry ${l.cssClass}">${l.msg}</div>`).join('')}
+                    </div>
+                `;
+                const logEl = document.getElementById('battle-log');
+                if (logEl) logEl.scrollTop = logEl.scrollHeight;
+            }
+
+            function shakeElement(id) {
+                const el = document.getElementById(id);
+                if (el) { el.classList.add('shake');
+                    setTimeout(() => el.classList.remove('shake'), 500); }
+            }
+
+            function flashContainer() {
+                gameContainer.classList.add('flash-gold');
+                setTimeout(() => gameContainer.classList.remove('flash-gold'), 600);
+            }
+
+            function playerAttack() {
+                const enemy = gameState.currentEnemy;
+                const p = gameState.player;
+                const stats = getPlayerEffectiveStats();
+                let damage = Math.max(1, stats.atk - enemy.def + rand(-3, 5));
+                let isCrit = Math.random() < stats.critRate;
+                if (isCrit) {
+                    damage = Math.floor(damage * 1.5);
+                    addLog(`💥 暴擊！你對${enemy.name}造成了 <span class="log-crit">${damage}</span> 點傷害！`, 'log-crit');
+                    flashContainer();
+                } else {
+                    addLog(`⚔️ 你攻擊${enemy.name}，造成 <span class="log-damage">${damage}</span> 點傷害`, '');
+                }
+                enemy.hp -= damage;
+                shakeElement('enemy-display');
+                if (enemy.hp <= 0) { enemyDefeated(); return; }
+                enemyTurn();
+            }
+
+            function playerSkill(skillIndex) {
+                const enemy = gameState.currentEnemy;
+                const p = gameState.player;
+                const stats = getPlayerEffectiveStats();
+                const skill = p.skills[skillIndex];
+                if (p.mp < skill.mpCost) return;
+                p.mp -= skill.mpCost;
+                if (skill.type === 'damage') {
+                    let damage = Math.max(1, Math.floor(stats.atk * skill.multiplier) - enemy.def + rand(-2, 6));
+                    let isCrit = Math.random() < stats.critRate;
+                    if (isCrit) {
+                        damage = Math.floor(damage * 1.5);
+                        addLog(`💥✨ ${skill.name}暴擊！對${enemy.name}造成 <span class="log-crit">${damage}</span> 點傷害！`,
+                            'log-skill');
+                        flashContainer();
+                    } else {
+                        addLog(
+                            `✨ ${skill.name}！對${enemy.name}造成 <span class="log-damage">${damage}</span> 點傷害`,
+                            'log-skill');
+                    }
+                    enemy.hp -= damage;
+                    shakeElement('enemy-display');
+                } else if (skill.type === 'buff_def') {
+                    gameState.buffs.defBoost = skill.buffValue;
+                    gameState.buffTurns.defBoost = skill.duration;
+                    addLog(`🛡️ ${skill.name}！防禦力提升${Math.round(skill.buffValue*100)}%，持續${skill.duration}回合`,
+                        'log-info');
+                } else if (skill.type === 'buff_shield') {
+                    gameState.buffs.shieldAmount = skill.buffValue;
+                    gameState.buffTurns.shieldAmount = skill.duration;
+                    addLog(`❄️ ${skill.name}！受到的傷害減少${Math.round(skill.buffValue*100)}%，持續${skill.duration}回合`,
+                        'log-info');
+                } else if (skill.type === 'poison') {
+                    gameState.buffs.poisonTurns = skill.duration;
+                    gameState.buffTurns.poisonTurns = skill.duration;
+                    gameState.buffs.poisonDamage = Math.floor(stats.atk * skill.multiplier);
+                    addLog(`☠️ ${skill.name}！敵人中毒，每回合受到${gameState.buffs.poisonDamage}點傷害，持續${skill.duration}回合`,
+                        'log-skill');
+                }
+                if (enemy.hp <= 0) { enemyDefeated(); return; }
+                enemyTurn();
+            }
+
+            function playerUsePotion() {
+                const p = gameState.player;
+                if (p.potions.hp <= 0 && p.potions.mp <= 0) return;
+                const stats = getPlayerEffectiveStats();
+                let used = false;
+                if (p.hp < stats.maxHP && p.potions.hp > 0) {
+                    const heal = Math.min(50, stats.maxHP - p.hp);
+                    p.hp += heal;
+                    p.potions.hp--;
+                    addLog(`🧪 使用生命藥水，恢復 <span class="log-heal">${heal}</span> 點生命`, 'log-heal');
+                    used = true;
+                } else if (p.mp < p.maxMP && p.potions.mp > 0) {
+                    const restore = Math.min(30, p.maxMP - p.mp);
+                    p.mp += restore;
+                    p.potions.mp--;
+                    addLog(`🧪 使用魔法藥水，恢復 <span class="log-heal">${restore}</span> 點魔力`, 'log-heal');
+                    used = true;
+                } else if (p.potions.hp > 0) {
+                    p.potions.hp--;
+                    addLog(`🧪 使用生命藥水（生命已滿）`, '');
+                    used = true;
+                } else if (p.potions.mp > 0) {
+                    p.potions.mp--;
+                    addLog(`🧪 使用魔法藥水（魔力已滿）`, '');
+                    used = true;
+                }
+                if (used) {
+                    if (gameState.currentEnemy && gameState.currentEnemy.hp > 0) enemyTurn();
+                    renderBattle();
+                }
+            }
+
+            function playerFlee() {
+                const enemy = gameState.currentEnemy;
+                if (enemy.isBoss) { addLog('⚠️ Boss戰無法逃跑！', 'log-info');
+                    renderBattle(); return; }
+                const fleeChance = 0.55 + (gameState.player.spd - enemy.spd) * 0.03;
+                if (Math.random() < clamp(fleeChance, 0.2, 0.9)) {
+                    addLog('🏃 你成功逃跑了！', 'log-info');
+                    setTimeout(() => renderVillage(), 800);
+                } else {
+                    addLog('❌ 逃跑失敗！', 'log-damage');
+                    enemyTurn();
+                }
+            }
+
+            function enemyTurn() {
+                const enemy = gameState.currentEnemy;
+                const p = gameState.player;
+                const stats = getPlayerEffectiveStats();
+                // 處理中毒
+                if (gameState.buffs.poisonTurns > 0 && enemy.hp > 0) {
+                    const poisonDmg = gameState.buffs.poisonDamage;
+                    enemy.hp -= poisonDmg;
+                    addLog(`☠️ 毒素發作！${enemy.name}受到 <span class="log-damage">${poisonDmg}</span> 點毒傷`, 'log-skill');
+                    gameState.buffTurns.poisonTurns--;
+                    if (gameState.buffTurns.poisonTurns <= 0) {
+                        gameState.buffs.poisonTurns = 0;
+                        gameState.buffs.poisonDamage = 0;
+                        addLog('☠️ 毒素效果結束', '');
+                    }
+                    if (enemy.hp <= 0) { enemyDefeated(); return; }
+                }
+                // 減少buff回合
+                if (gameState.buffTurns.defBoost > 0) {
+                    gameState.buffTurns.defBoost--;
+                    if (gameState.buffTurns.defBoost <= 0) { gameState.buffs.defBoost = 0;
+                        addLog('🛡️ 盾牆效果結束', ''); }
+                }
+                if (gameState.buffTurns.shieldAmount > 0) {
+                    gameState.buffTurns.shieldAmount--;
+                    if (gameState.buffTurns.shieldAmount <= 0) { gameState.buffs.shieldAmount = 0;
+                        addLog('❄️ 冰霜護盾效果結束', ''); }
+                }
+                if (enemy.hp <= 0) { enemyDefeated(); return; }
+                // 怪物攻擊
+                let rawDamage = Math.max(1, enemy.atk - getPlayerCurrentDef() + rand(-2, 4));
+                if (gameState.buffs.shieldAmount > 0) {
+                    rawDamage = Math.floor(rawDamage * (1 - gameState.buffs.shieldAmount));
+                }
+                rawDamage = Math.max(1, rawDamage);
+                const enemyCrit = Math.random() < 0.06;
+                const finalDamage = enemyCrit ? Math.floor(rawDamage * 1.5) : rawDamage;
+                if (enemyCrit) {
+                    addLog(`💢 ${enemy.name}暴擊！對你造成 <span class="log-crit">${finalDamage}</span> 點傷害！`, 'log-damage');
+                    shakeElement('game-container');
+                } else {
+                    addLog(`👊 ${enemy.name}攻擊你，造成 <span class="log-damage">${finalDamage}</span> 點傷害`, '');
+                }
+                p.hp -= finalDamage;
+                if (p.hp <= 0) { playerDefeated(); return; }
+                renderBattle();
+            }
+
+            function enemyDefeated() {
+                const enemy = gameState.currentEnemy;
+                const p = gameState.player;
+                const zone = gameState.currentZone;
+                addLog(`🎉 ${enemy.name}被擊敗了！`, 'log-loot');
+                flashContainer();
+                const expGain = enemy.exp;
+                const goldGain = enemy.gold + rand(-5, 15);
+                p.exp += expGain;
+                p.gold += Math.max(0, goldGain);
+                gameState.totalKills++;
+                addLog(`📈 獲得 <span class="log-loot">${expGain}</span> 經驗值，<span class="log-loot">${Math.max(0,goldGain)}</span> 金幣`,
+                    'log-loot');
+                // 掉落裝備
+                if (enemy.lootTable && enemy.lootTable.length > 0) {
+                    for (const loot of enemy.lootTable) {
+                        if (Math.random() < loot.chance) {
+                            const item = ALL_ITEMS[loot.itemId];
+                            if (item) {
+                                p.inventory.push(JSON.parse(JSON.stringify(item)));
+                                const rarityInfo = RARITY_COLORS[item.rarity];
+                                addLog(
+                                    `🎁 掉落了 <span class="${rarityInfo.cssClass}">【${rarityInfo.name}】${item.icon} ${item.name}</span>！`,
+                                    'log-loot');
+                            }
+                        }
+                    }
+                }
+                // Boss擊敗標記
+                if (enemy.isBoss && zone) {
+                    if (!gameState.defeatedBosses.includes(zone.id)) {
+                        gameState.defeatedBosses.push(zone.id);
+                        addLog(`🏆 征服了${zone.name}！`, 'log-loot');
+                    }
+                    if (enemy.isFinalBoss) {
+                        setTimeout(() => renderVictory(), 1500);
+                        renderBattle();
+                        return;
+                    }
+                }
+                // 升級檢查
+                while (p.exp >= p.expToNext) {
+                    p.exp -= p.expToNext;
+                    p.level++;
+                    p.expToNext = Math.floor(p.expToNext * 1.4);
+                    const hpGain = rand(8, 16);
+                    const mpGain = rand(3, 8);
+                    const atkGain = rand(2, 5);
+                    const defGain = rand(1, 4);
+                    const spdGain = rand(0, 2);
+                    p.maxHP += hpGain;
+                    p.maxMP += mpGain;
+                    p.atk += atkGain;
+                    p.def += defGain;
+                    p.spd += spdGain;
+                    p.hp = p.maxHP;
+                    p.mp = p.maxMP;
+                    addLog(`🎊 升級！達到 <span class="log-loot">Lv.${p.level}</span>！全屬性提升！`, 'log-loot');
+                    flashContainer();
+                }
+                gameState.buffs = { defBoost: 0, shieldAmount: 0, poisonTurns: 0, poisonDamage: 0 };
+                gameState.buffTurns = { defBoost: 0, shieldAmount: 0, poisonTurns: 0 };
+                setTimeout(() => {
+                    renderBattleResult();
+                }, 600);
+            }
+
+            function renderBattleResult() {
+                const p = gameState.player;
+                clearContent();
+                renderStatusBar();
+                mainContent.innerHTML = `
+                    <div class="panel" style="text-align:center;">
+                        <h3>🎉 戰鬥勝利！</h3>
+                        <div style="font-size:3em;margin:10px 0;">🏆</div>
+                        <p style="color:#ccc;">${p.className} Lv.${p.level}</p>
+                        <p style="color:#888;">經驗值: ${formatNum(p.exp)} / ${formatNum(p.expToNext)}</p>
+                        <div class="btn-row" style="margin-top:14px;">
+                            <button class="btn primary" onclick="renderExplore()">🗺️ 繼續探索</button>
+                            <button class="btn" onclick="renderVillage()">🏘️ 返回村莊</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function playerDefeated() {
+                const p = gameState.player;
+                const goldLoss = Math.floor(p.gold * 0.2);
+                p.gold = Math.max(0, p.gold - goldLoss);
+                p.hp = Math.floor(p.maxHP * 0.3);
+                p.mp = Math.floor(p.maxMP * 0.3);
+                gameState.buffs = { defBoost: 0, shieldAmount: 0, poisonTurns: 0, poisonDamage: 0 };
+                gameState.buffTurns = { defBoost: 0, shieldAmount: 0, poisonTurns: 0 };
+                addLog('💀 你被擊敗了...失去了部分金幣，回到村莊休養', 'log-damage');
+                clearContent();
+                renderStatusBar();
+                mainContent.innerHTML = `
+                    <div class="panel" style="text-align:center;">
+                        <h3 style="color:#e86060;">💀 戰鬥失敗</h3>
+                        <div style="font-size:3em;margin:10px 0;">😵</div>
+                        <p style="color:#ccc;">你失去了 <span style="color:#e0b030;">${goldLoss}</span> 金幣</p>
+                        <p style="color:#888;">在村莊中甦醒，生命與魔力部分恢復</p>
+                        <div class="btn-row" style="margin-top:14px;">
+                            <button class="btn primary" onclick="renderVillage()">🏘️ 返回村莊</button>
+                        </div>
+                    </div>
+                `;
+                gameState.currentScene = GAME_STATES.GAME_OVER;
+            }
+
+            function renderVictory() {
+                gameState.currentScene = GAME_STATES.VICTORY;
+                clearContent();
+                statusBar.style.display = 'none';
+                mainContent.innerHTML = `
+                    <div class="panel" style="text-align:center;padding:30px 20px;">
+                        <div style="font-size:6em;animation:enemyFloat 2s ease-in-out infinite;">👑</div>
+                        <h3 style="font-size:1.6em;color:#ffd700;letter-spacing:3px;">🏆 傳奇誕生！</h3>
+                        <p style="color:#e0c870;font-size:1.1em;">你擊敗了遠古巨龍，拯救了整個世界！</p>
+                        <p style="color:#aaa;line-height:1.6;">${gameState.player.className} <b>${gameState.player.classIcon}</b> Lv.${gameState.player.level}<br>
+                        總擊殺數: ${gameState.totalKills}<br>
+                        金幣: ${formatNum(gameState.player.gold)}</p>
+                        <p style="color:#888;font-size:0.9em;">感謝遊玩《暗影傳說》</p>
+                        <div style="margin-top:18px;">
+                            <button class="btn primary" onclick="renderTitle()">🔄 重新開始</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderInventory() {
+                gameState.currentScene = GAME_STATES.INVENTORY;
+                clearContent();
+                renderStatusBar();
+                const p = gameState.player;
+                let equipHTML = '';
+                for (const [slot, slotName] of [
+                        ['weapon', '武器'],
+                        ['armor', '防具'],
+                        ['ring', '戒指']
+                    ]) {
+                    const eq = p.equipment[slot];
+                    if (eq) {
+                        const rInfo = RARITY_COLORS[eq.rarity];
+                        equipHTML += `
+                            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(0,0,0,0.3);border-radius:6px;margin-bottom:4px;">
+                                <span style="font-size:1.5em;">${eq.icon}</span>
+                                <span class="${rInfo.cssClass}" style="font-weight:600;">【${rInfo.name}】${eq.name}</span>
+                                <span style="font-size:0.7em;color:#888;">${slotName}</span>
+                                <button class="btn small danger" onclick="unequipItem('${slot}')" style="margin-left:auto;">取下</button>
+                            </div>
+                        `;
+                    } else {
+                        equipHTML += `
+                            <div style="padding:8px;background:rgba(0,0,0,0.2);border-radius:6px;margin-bottom:4px;color:#555;text-align:center;">
+                                🕳️ ${slotName}槽 - 空
+                            </div>
+                        `;
+                    }
+                }
+                let invHTML = '';
+                if (p.inventory.length === 0) {
+                    invHTML = '<p style="color:#555;text-align:center;">背包空空如也</p>';
+                } else {
+                    p.inventory.forEach((item, idx) => {
+                        const rInfo = RARITY_COLORS[item.rarity];
+                        invHTML += `
+                            <div style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(0,0,0,0.3);border-radius:6px;margin-bottom:4px;">
+                                <span style="font-size:1.5em;">${item.icon}</span>
+                                <span class="${rInfo.cssClass}" style="font-weight:600;">【${rInfo.name}】${item.name}</span>
+                                <span style="font-size:0.7em;color:#888;">${item.slot==='weapon'?'⚔️武器':(item.slot==='armor'?'🛡️防具':'💍戒指')}</span>
+                                <span style="font-size:0.7em;color:#777;">ATK+${item.atk} DEF+${item.def} HP+${item.hp} SPD+${item.spd}</span>
+                                <button class="btn small" onclick="equipItem(${idx})" style="margin-left:auto;">裝備</button>
+                            </div>
+                        `;
+                    });
+                }
+                mainContent.innerHTML = `
+                    <div class="panel">
+                        <h3>🎒 背包與裝備</h3>
+                        <h4 style="color:#e0d0b0;margin:8px 0;">已裝備</h4>
+                        ${equipHTML}
+                        <h4 style="color:#e0d0b0;margin:12px 0 8px;">背包物品 (${p.inventory.length})</h4>
+                        ${invHTML}
+                        <h4 style="color:#e0d0b0;margin:12px 0 8px;">藥水</h4>
+                        <p style="color:#ccc;">❤️生命藥水: ${p.potions.hp} 瓶 | 💧魔法藥水: ${p.potions.mp} 瓶</p>
+                        <button class="btn small" onclick="renderVillage()" style="margin-top:10px;">⬅ 返回村莊</button>
+                    </div>
+                `;
+            }
+
+            function equipItem(idx) {
+                const p = gameState.player;
+                if (idx < 0 || idx >= p.inventory.length) return;
+                const item = p.inventory[idx];
+                const slot = item.slot;
+                const oldEq = p.equipment[slot];
+                if (oldEq) p.inventory.push(oldEq);
+                p.equipment[slot] = item;
+                p.inventory.splice(idx, 1);
+                renderInventory();
+                renderStatusBar();
+            }
+
+            function unequipItem(slot) {
+                const p = gameState.player;
+                const eq = p.equipment[slot];
+                if (!eq) return;
+                p.inventory.push(eq);
+                p.equipment[slot] = null;
+                renderInventory();
+                renderStatusBar();
+            }
+
+            function renderShop() {
+                gameState.currentScene = GAME_STATES.SHOP;
+                clearContent();
+                renderStatusBar();
+                const p = gameState.player;
+                const shopItems = [
+                    { name: '生命藥水', icon: '🧪', desc: '恢復50點生命', cost: 30, action: 'buy_hp_potion' },
+                    { name: '魔法藥水', icon: '💧', desc: '恢復30點魔力', cost: 25, action: 'buy_mp_potion' },
+                    { name: '鐵劍', icon: '⚔️', desc: 'ATK+6 | 普通品質', cost: 60, action: 'buy_iron_sword' },
+                    { name: '布甲', icon: '👘', desc: 'DEF+5 HP+10 | 普通品質', cost: 50, action: 'buy_cloth_armor' },
+                ];
+                let shopHTML = shopItems.map((item, i) => `
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(0,0,0,0.3);border-radius:8px;margin-bottom:6px;">
+                        <span style="font-size:2em;">${item.icon}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;color:#e0d0b0;">${item.name}</div>
+                            <div style="font-size:0.75em;color:#888;">${item.desc}</div>
+                        </div>
+                        <span style="color:#e0b030;font-weight:600;">💰${item.cost}</span>
+                        <button class="btn small primary" onclick="buyItem('${item.action}',${item.cost})" ${p.gold<item.cost?'disabled':''}>
+                            購買
+                        </button>
+                    </div>
+                `).join('');
+                mainContent.innerHTML = `
+                    <div class="panel">
+                        <h3>🏪 村莊商店</h3>
+                        <p style="text-align:center;color:#888;">金幣: <span style="color:#e0b030;font-weight:600;">💰${formatNum(p.gold)}</span></p>
+                        ${shopHTML}
+                        <button class="btn small" onclick="renderVillage()" style="margin-top:10px;">⬅ 返回村莊</button>
+                    </div>
+                `;
+            }
+
+            function buyItem(action, cost) {
+                const p = gameState.player;
+                if (p.gold < cost) return;
+                p.gold -= cost;
+                switch (action) {
+                    case 'buy_hp_potion':
+                        p.potions.hp++;
+                        break;
+                    case 'buy_mp_potion':
+                        p.potions.mp++;
+                        break;
+                    case 'buy_iron_sword':
+                        p.inventory.push(JSON.parse(JSON.stringify(ALL_ITEMS['iron_sword'])));
+                        break;
+                    case 'buy_cloth_armor':
+                        p.inventory.push(JSON.parse(JSON.stringify(ALL_ITEMS['cloth_armor'])));
+                        break;
+                }
+                renderShop();
+                renderStatusBar();
+            }
+
+            function renderStatus() {
+                gameState.currentScene = GAME_STATES.STATUS;
+                clearContent();
+                renderStatusBar();
+                const p = gameState.player;
+                const stats = getPlayerEffectiveStats();
+                mainContent.innerHTML = `
+                    <div class="panel" style="text-align:center;">
+                        <h3>📋 角色狀態</h3>
+                        <div style="font-size:4em;">${p.classIcon}</div>
+                        <div style="font-weight:700;font-size:1.2em;color:#e0d0b0;">${p.className} Lv.${p.level}</div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;text-align:left;font-size:0.9em;">
+                            <div>❤️ 生命值: <b style="color:#e74c3c;">${p.hp}/${stats.maxHP}</b></div>
+                            <div>💧 魔力值: <b style="color:#3498db;">${p.mp}/${p.maxMP}</b></div>
+                            <div>⚔️ 攻擊力: <b>${stats.atk}</b></div>
+                            <div>🛡️ 防禦力: <b>${stats.def}</b></div>
+                            <div>💨 速度: <b>${stats.spd}</b></div>
+                            <div>💥 暴擊率: <b>${Math.round(stats.critRate*100)}%</b></div>
+                            <div>📊 經驗值: <b>${formatNum(p.exp)}/${formatNum(p.expToNext)}</b></div>
+                            <div>💰 金幣: <b style="color:#e0b030;">${formatNum(p.gold)}</b></div>
+                        </div>
+                        <h4 style="color:#e0d0b0;margin-top:12px;">✨ 技能</h4>
+                        ${p.skills.map(sk => `
+                            <div style="background:rgba(0,0,0,0.3);padding:8px;border-radius:6px;margin:4px 0;text-align:left;">
+                                <b style="color:#d0b0e0;">${sk.name}</b> (${sk.mpCost}MP) - ${sk.desc}
+                            </div>
+                        `).join('')}
+                        <button class="btn small" onclick="renderVillage()" style="margin-top:10px;">⬅ 返回村莊</button>
+                    </div>
+                `;
+            }
+
+            // ==================== 初始化 ====================
+            function init() {
+                renderTitle();
+            }
+
+            // 將函數暴露到全局作用域
+            window.startClassSelect = startClassSelect;
+            window.selectClass = selectClass;
+            window.renderTitle = renderTitle;
+            window.renderVillage = renderVillage;
+            window.renderExplore = renderExplore;
+            window.startBattle = startBattle;
+            window.playerAttack = playerAttack;
+            window.playerSkill = playerSkill;
+            window.playerUsePotion = playerUsePotion;
+            window.playerFlee = playerFlee;
+            window.renderInventory = renderInventory;
+            window.equipItem = equipItem;
+            window.unequipItem = unequipItem;
+            window.renderShop = renderShop;
+            window.buyItem = buyItem;
+            window.renderStatus = renderStatus;
+            window.renderBattleResult = renderBattleResult;
+
+            init();
+            console.log('⚔️ 暗影傳說 - Shadow Legend 已就緒');
+            console.log('🗺️ 4大區域 · 多種怪物 · Boss挑戰 · 裝備系統 · 回合制戰鬥');
+            console.log('🎮 祝你好運，冒險者！');
+        })();
+    </script>
+</body>
+</html>
